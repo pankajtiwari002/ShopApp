@@ -1,7 +1,9 @@
 import 'dart:developer';
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 
 import './product.dart';
 
@@ -76,30 +78,48 @@ class Products with ChangeNotifier {
 
   Future<void> fetchAndGet([bool filter = false]) async{
       try{
+        log('1');
           String filterString = filter ? 'orderBy="creatorId"&equalTo="$_userId"' : '';
+          // String filterString = "";
           var url = 'https://shop-app-9e2de-default-rtdb.asia-southeast1.firebasedatabase.app/products.json?auth=$_authToken&$filterString';
           final response = await http.get(Uri.parse(url)); 
           final List<Product> loadedProduct = [];
-          final _extractedData = json.decode(response.body) as Map<String,dynamic>;
+          // log('2');
+          String responsestring = response.body.toString();
+          final Map<String,dynamic> _extractedData = json.decode(responsestring);
+          // log('3');
           url = 'https://shop-app-9e2de-default-rtdb.asia-southeast1.firebasedatabase.app/userFavorite/$_userId.json?auth=$_authToken';
-          final favoriteResponse = await http.get(Uri.parse(url));
-          final favoriteData = json.decode(favoriteResponse.body);
+          // log('4');
+          final Response favoriteResponse = await http.get(Uri.parse(url));
+          // log('5');
+          String favoritestring = favoriteResponse.body.toString();
+          // log('6');
+          final Map<String,dynamic> favoriteData = json.decode(favoritestring);
+          // log(_extractedData.toString());
           _extractedData.forEach((prodId, prodData) {
             Product product = Product(
-              id: prodId,
-              description: prodData['description'],
+              id: prodId.toString(),
+              description: prodData['description'].toString(),
               price: prodData['price'],
-              imageUrl: prodData['imageUrl'],
-              title: prodData['title'],
+              imageUrl: prodData['imageUrl'].toString(),
+              title: prodData['title'].toString(),
               isFavorite: favoriteData == null ? false : favoriteData[prodId] ?? false, 
+                // id: prodId.toString(),
+                // description: 'Pankaj Tiwari is a good boy',
+                // price: 50.00,
+                // imageUrl: "https://m.media-amazon.com/images/I/612LwAwHefL.SX679.jpg",
+                // title: "Spiral Notebook",
+                // isFavorite: false, 
             );
+            // log('8');
             loadedProduct.add(product);
           });
+          // log('9');
           _items = loadedProduct;
           notifyListeners();
           // print(json.decode(response.body));
       }catch(error){
-        print(error.toString());
+        log(error.toString());
       }
   }
 
